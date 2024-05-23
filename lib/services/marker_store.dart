@@ -14,7 +14,7 @@ class MarkerStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void fetchMarkersOnce() async {
+  Future<void> fetchMarkersOnce() async {
     if (_markers.isEmpty) {
       try {
         final snapshot = await FirestoreMarkerService.getAllMarkers();
