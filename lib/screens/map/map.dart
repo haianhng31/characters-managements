@@ -32,24 +32,61 @@ class _MapPageState extends State<MapPage> {
   
   late final CustomInfoWindowController _customInfoWindowController = CustomInfoWindowController();
   late List<Marker> _storeMarkers;
-  late List<Marker> _newMarker = [];
+  final List<Marker> _newMarker = [];
   BitmapDescriptor? _markerIcon;
 
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
-    super.initState();
     initializeMarkers();
     getLocationUpdates();
+    super.initState();
   }
 
   Future<void> initializeMarkers() async {
-    Provider.of<MarkerStore>(context, listen: false).fetchMarkersOnce();
+    await Provider.of<MarkerStore>(context, listen: false).fetchMarkersOnce();
+    _updateMarkers();
     setState(() {
-      _updateMarkers();
       markersInitialized = true; // Set the flag to indicate initialization is complete
     });
+  }
+
+  void _updateMarkers() {
+    final markersData = Provider.of<MarkerStore>(context, listen: false).markers;
+    print('updating markers');
+    print('markersData: $markersData');
+    final markers =  _fetchMarkers(markersData);
+    setState(() {
+      _storeMarkers = markers;
+    });
+  }
+
+  List<Marker> _fetchMarkers(markersData) {
+    print('fetching markers...');
+    return markersData.map<Marker>((marker) {
+      // var markerIcon =_loadMarkerIcon(marker.markerImg);
+      return Marker(
+        markerId: MarkerId(marker.id),
+        // icon: _markerIcon!,
+        icon: BitmapDescriptor.defaultMarker,
+        position: LatLng(marker.lat, marker.lng),
+        draggable: true,
+        onTap: () {
+          _customInfoWindowController.addInfoWindow!(
+            MarkerWindow(
+              // character: marker.character,
+              characterName: marker.character.name,
+              characterImg: 'assets/img/vocations/${marker.character.vocation.image}',
+              date: marker.date,
+              characterIdsAssociated: marker.characterIdsAssociated,
+              description: marker.description,
+            ),
+            LatLng(marker.lat, marker.lng),
+          );
+        },
+      );
+    }).toList();
   }
 
   void _setMarker(LatLng pos) {
@@ -88,35 +125,6 @@ class _MapPageState extends State<MapPage> {
     return _markerIcon!;
   }
 
-  void _updateMarkers() {
-    setState(() {
-      _storeMarkers = _fetchMarkers(Provider.of<MarkerStore>(context, listen: false).markers);
-    });
-  }
-
-  List<Marker> _fetchMarkers(markersData) {
-    return markersData.map<Marker>((marker) {
-      // var markerIcon =_loadMarkerIcon(marker.markerImg);
-      return Marker(
-        markerId: MarkerId(marker.id),
-        // icon: _markerIcon!,
-        icon: BitmapDescriptor.defaultMarker,
-        position: LatLng(marker.lat, marker.lng),
-        draggable: true,
-        onTap: () {
-          _customInfoWindowController.addInfoWindow!(
-            MarkerWindow(
-              characterId: marker.characterId,
-              date: marker.date,
-              characterIdsAssociated: marker.characterIdsAssociated,
-              description: marker.description,
-            ),
-            LatLng(marker.lat, marker.lng),
-          );
-        },
-      );
-    }).toList();
-  }
   
 
   @override
@@ -126,7 +134,7 @@ class _MapPageState extends State<MapPage> {
         title: const StyledTitle("Map"),
         centerTitle: true,
       ),
-      body: (_currentP == null || markersInitialized == false)? const Center(child: CircularProgressIndicator()) : 
+      body: (_currentP == null || markersInitialized == false )? const Center(child: CircularProgressIndicator()) : 
         Column(
           children: [
             Row(
@@ -152,30 +160,6 @@ class _MapPageState extends State<MapPage> {
             Expanded(
               child: Stack(
                 children: [
-                  // Consumer<MarkerStore>(
-                  //   builder: (context, value, child) {
-                  //     List<Marker> storeMarkers =  Provider.of<MarkerStore>(context, listen: false).markers.map<Marker>((marker) {
-                  //       _loadMarkerIcon(marker.markerImg);
-                  //       return Marker(
-                  //         markerId: MarkerId(marker.id),
-                  //         icon: _markerIcon!,
-                  //         position: LatLng(marker.lat, marker.lng),
-                  //         draggable: true,
-                  //         onTap: () {
-                  //           _customInfoWindowController.addInfoWindow!(
-                  //             MarkerWindow(
-                  //               characterId: marker.characterId,
-                  //               date: marker.date,
-                  //               characterIdsAssociated: marker.characterIdsAssociated,
-                  //               description: marker.description,
-                  //             ),
-                  //             LatLng(marker.lat, marker.lng),
-                  //           );
-                  //         },
-                  //       );
-                  //     }).toList();
-
-                      // return 
                       GoogleMap(
                         mapType: MapType.terrain,
                         initialCameraPosition: CameraPosition(
@@ -208,8 +192,6 @@ class _MapPageState extends State<MapPage> {
                         },
                         // polylines: Set<Polyline>.of(polylines.values),
                       ),
-                  //   }
-                  // ),
 
                   CustomInfoWindow(
                     controller: _customInfoWindowController,
