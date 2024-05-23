@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_rpg/screens/map/create_new_marker.dart';
+import 'package:flutter_rpg/screens/map/marker_filter.dart';
 import 'package:flutter_rpg/screens/map/marker_window.dart';
 import 'package:flutter_rpg/services/location_service.dart';
 import 'package:flutter_rpg/services/marker_store.dart';
@@ -34,7 +35,7 @@ class _MapPageState extends State<MapPage> {
   late List<Marker> _storeMarkers;
   final List<Marker> _newMarker = [];
   BitmapDescriptor? _markerIcon;
-  late final String _markerFilterCharacter = 'a98f27eb-d7bc-487f-9110-3f30ff6a486b';
+  late String _markerFilterCharacter = "";
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -150,7 +151,12 @@ class _MapPageState extends State<MapPage> {
     return _markerIcon!;
   }
 
-  
+  void onCharacterSelected(String characterId) {
+    setState(() {
+      _markerFilterCharacter = characterId;
+    });
+    _updateMarkers();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -181,6 +187,9 @@ class _MapPageState extends State<MapPage> {
                   }, 
                   icon: const Icon(Icons.search))
               ],),
+
+            MarkerFilter(onCharacterSelected: onCharacterSelected),
+
 
             Expanded(
               child: Stack(
@@ -230,10 +239,15 @@ class _MapPageState extends State<MapPage> {
         ),
 
       floatingActionButton: 
-        FloatingActionButton(
-          onPressed: _toCurrentLocation,
-          child: const Icon(Icons.my_location_outlined),
-      ),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              onPressed: _toCurrentLocation,
+              child: const Icon(Icons.my_location_outlined),
+            ),
+          ],
+        ),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.miniStartFloat,
     );
