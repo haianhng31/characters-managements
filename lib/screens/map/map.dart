@@ -34,6 +34,7 @@ class _MapPageState extends State<MapPage> {
   late List<Marker> _storeMarkers;
   final List<Marker> _newMarker = [];
   BitmapDescriptor? _markerIcon;
+  late final String _markerFilterCharacter = 'a98f27eb-d7bc-487f-9110-3f30ff6a486b';
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -54,8 +55,6 @@ class _MapPageState extends State<MapPage> {
 
   void _updateMarkers() {
     final markersData = Provider.of<MarkerStore>(context, listen: false).markers;
-    print('updating markers');
-    print('markersData: $markersData');
     final markers =  _fetchMarkers(markersData);
     setState(() {
       _storeMarkers = markers;
@@ -64,29 +63,55 @@ class _MapPageState extends State<MapPage> {
 
   List<Marker> _fetchMarkers(markersData) {
     print('fetching markers...');
-    return markersData.map<Marker>((marker) {
-      // var markerIcon =_loadMarkerIcon(marker.markerImg);
-      return Marker(
-        markerId: MarkerId(marker.id),
-        // icon: _markerIcon!,
-        icon: BitmapDescriptor.defaultMarker,
-        position: LatLng(marker.lat, marker.lng),
-        draggable: true,
-        onTap: () {
-          _customInfoWindowController.addInfoWindow!(
-            MarkerWindow(
-              // character: marker.character,
-              characterName: marker.character.name,
-              characterImg: 'assets/img/vocations/${marker.character.vocation.image}',
-              date: marker.date,
-              characterIdsAssociated: marker.characterIdsAssociated,
-              description: marker.description,
-            ),
-            LatLng(marker.lat, marker.lng),
-          );
-        },
-      );
-    }).toList();
+
+    if (_markerFilterCharacter == "" || _markerFilterCharacter == null) {
+      return markersData.map<Marker>((marker) {
+        // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        return Marker(
+          markerId: MarkerId(marker.id),
+          // icon: _markerIcon!,
+          icon: BitmapDescriptor.defaultMarker,
+          position: LatLng(marker.lat, marker.lng),
+          draggable: true,
+          onTap: () {
+            _customInfoWindowController.addInfoWindow!(
+              MarkerWindow(
+                characterName: marker.character.name,
+                characterImg: 'assets/img/vocations/${marker.character.vocation.image}',
+                date: marker.date,
+                characterIdsAssociated: marker.characterIdsAssociated,
+                description: marker.description,
+              ),
+              LatLng(marker.lat, marker.lng),
+            );
+          },
+        );
+      }).toList();
+    }
+    else {
+      return markersData.where((marker) => marker.character.id == _markerFilterCharacter).map<Marker>((marker) {
+        // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        return Marker(
+          markerId: MarkerId(marker.id),
+          // icon: _markerIcon!,
+          icon: BitmapDescriptor.defaultMarker,
+          position: LatLng(marker.lat, marker.lng),
+          draggable: true,
+          onTap: () {
+            _customInfoWindowController.addInfoWindow!(
+              MarkerWindow(
+                characterName: marker.character.name,
+                characterImg: 'assets/img/vocations/${marker.character.vocation.image}',
+                date: marker.date,
+                characterIdsAssociated: marker.characterIdsAssociated,
+                description: marker.description,
+              ),
+              LatLng(marker.lat, marker.lng),
+            );
+          },
+        );
+      }).toList();
+    } 
   }
 
   void _setMarker(LatLng pos) {
