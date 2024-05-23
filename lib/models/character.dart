@@ -100,6 +100,16 @@ class Character with Stats {
     // )
     // .._isFav = map['isFav'] ?? false;
   }
+
+  Map<String, dynamic> toMap() {
+    // needs to return a map 
+    return {
+      'name': name,
+      'slogan': slogan,
+      'vocation': vocation.toString(), //looks like: vocation.ninja
+      'id': id
+    }; 
+  }
 }
 
 
