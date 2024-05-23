@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_rpg/models/marker_window_model.dart';
+import 'package:flutter_rpg/models/marker.dart';
 
 class FirestoreMarkerService {
   // Make a reference object - Like a table in SQL 
@@ -27,17 +27,17 @@ class FirestoreMarkerService {
   }
 
   // update a Marker 
-  static Future<void> updateMarker(MarkerWindowModel marker) async {
-    await ref.doc(marker.id).update({
-      "characterId": marker.characterId,
-      "date": marker.date,
-      "lat": marker.lat,
-      "lng": marker.lng,
-      "characterIdsAssociated": marker.characterIdsAssociated,
-      "description": marker.description,
-      "markerImg": marker.markerImg
-      });
-  }
+  // static Future<void> updateMarker(MarkerWindowModel marker) async {
+  //   await ref.doc(marker.id).update({
+  //     "characterId": marker.characterId,
+  //     "date": marker.date,
+  //     "lat": marker.lat,
+  //     "lng": marker.lng,
+  //     "characterIdsAssociated": marker.characterIdsAssociated,
+  //     "description": marker.description,
+  //     "markerImg": marker.markerImg
+  //     });
+  // }
 
   // delete a Marker
   static Future<void> deleteMarker(MarkerWindowModel marker) async {

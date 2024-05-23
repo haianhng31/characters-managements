@@ -14,7 +14,12 @@ class FirestoreService {
 
   // Add a new character to the database
   static Future<void> addCharacter(Character character) async {
-    await ref.doc(character.id).set(character);
+    try {
+      await ref.doc(character.id).set(character);
+    } catch (e) {
+      print('cannot add character in firestore_service: $e');
+    }
+    
   }
 
   // get characters from the database

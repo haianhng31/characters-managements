@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:clippy_flutter/triangle.dart';
 import 'package:flutter_rpg/models/character.dart';
-import 'package:flutter_rpg/models/marker_window_model.dart';
+import 'package:flutter_rpg/models/marker.dart';
 import 'package:flutter_rpg/services/character_store.dart';
 import 'package:flutter_rpg/services/marker_store.dart';
 // import 'package:flutter_rpg/shared/styled_text.dart';
@@ -32,12 +32,15 @@ class CreateMarkerWindow extends StatefulWidget {
 class _CreateMarkerWindowState extends State<CreateMarkerWindow> {
   late final CustomInfoWindowController _controller;
   final _formKey = GlobalKey<FormState>();
-  late final Map<String, List<String>> _allCharacters = {};
-  String? _selectedCharacter; 
+  // late final Map<String, List<String>> _allCharacters = {};
+  late final Map<String, Character> _allCharacters = {};
+  Character? _selectedCharacter; 
+  String? _selectedCharacterId;
+  
   DateTime? _selectedDate;
   String _description = '';
-  Map<String, bool> _characterChecked = {'0a7eb94a-9296-48d1-a0d4-b0de37b092f2': true, 'a6043e36-9c80-42ca-898f-290813087ab6': false, 'c8292c15-6fc7-4cc2-ba3d-a94e5b724371': false};
-  late List<String> _selectedCharacterAssociated;
+  // Map<String, bool> _characterChecked = {'0a7eb94a-9296-48d1-a0d4-b0de37b092f2': true, 'a6043e36-9c80-42ca-898f-290813087ab6': false, 'c8292c15-6fc7-4cc2-ba3d-a94e5b724371': false};
+  late List<String> _selectedCharacterAssociated = ['0a7eb94a-9296-48d1-a0d4-b0de37b092f2'];
   bool dataInitialized = false;
 
   @override
@@ -45,13 +48,14 @@ class _CreateMarkerWindowState extends State<CreateMarkerWindow> {
     super.initState();
     initializeAllCharacters();
     _controller = widget.controller;
-    _selectedCharacterAssociated = _characterChecked.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
+    // _selectedCharacterAssociated = _characterChecked.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
   }
 
   Future<void> initializeAllCharacters() async {
     List<Character> storeCharacters = Provider.of<CharacterStore>(context, listen: false).characters;
     for (Character character in storeCharacters) {
-      _allCharacters[character.id] = [character.name, 'assets/img/vocations/${character.vocation.image}'];
+      // _allCharacters[character.id] = [character.name, 'assets/img/vocations/${character.vocation.image}'];
+      _allCharacters[character.id] = character;
     }
     setState(() {
       dataInitialized = true;
@@ -92,28 +96,31 @@ class _CreateMarkerWindowState extends State<CreateMarkerWindow> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       DropdownButtonFormField(
-                        value: _selectedCharacter,
+                        value: _selectedCharacterId,
                         items: _allCharacters.entries.map((character) {
                           return DropdownMenuItem<String>(
                             value: character.key,
                             child: Row(
                               children: [
                                 ClipOval( child: Image.asset(
-                                  character.value[1],
+                                  // character.value[1],
+                                  'assets/img/vocations/${character.value.vocation.image}',
                                   fit: BoxFit.cover,
                                   width: 25, 
                                   height: 25
                                   )
                                 ),
                                 const SizedBox(width: 10,),
-                                Text(character.value[0]),
+                                // Text(character.value[0]),
+                                Text(character.value.name),
                               ],)
                           );
                         }).toList(),
                         hint: Text("Select a character"),
                         onChanged: (value) {
                           setState(() {
-                            _selectedCharacter = value;
+                            _selectedCharacterId = value;
+                            _selectedCharacter = _allCharacters[value];
                           });
                         },
                       ),
@@ -148,33 +155,34 @@ class _CreateMarkerWindowState extends State<CreateMarkerWindow> {
               
                       const SizedBox(height: 3,),
 
-                      Wrap(
-                        spacing: 1.5,
-                        children: _selectedCharacterAssociated.isEmpty ? [const Center(child: Text("Currently empty..."))] : 
-                          _selectedCharacterAssociated.map((character) => Chip(
-                            label: Text(character),
-                            onDeleted: () {
-                              setState(() {
-                                _characterChecked[character] = false;
-                                _selectedCharacterAssociated = _characterChecked.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
-                              });
-                            })).toList(),
-                      ),
+                      // Wrap(
+                      //   spacing: 1.5,
+                      //   children: _selectedCharacterAssociated.isEmpty ? [const Center(child: Text("Currently empty..."))] : 
+                      //     _selectedCharacterAssociated.map((character) => Chip(
+                      //       label: Text(character),
+                      //       onDeleted: () {
+                      //         setState(() {
+                      //           _characterChecked[character] = false;
+                      //           _selectedCharacterAssociated = _characterChecked.entries.where((entry) => entry.value).map((entry) => entry.key).toList();
+                      //         });
+                      //       })).toList(),
+                      // ),
 
-                      const SizedBox(height: 3.0),
+                      // const SizedBox(height: 3.0),
               
                       Center(
                         child: ElevatedButton(
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
                               final newMarker = MarkerWindowModel(
-                                characterId: _selectedCharacter!,
+                                character: _selectedCharacter!,
                                 date: DateFormat('yyyy-MM-dd').format(_selectedDate!), 
                                 lat: widget.pos.latitude,
                                 lng: widget.pos.longitude,
                                 characterIdsAssociated: _selectedCharacterAssociated,
                                 description: _description,
-                                markerImg: _allCharacters[_selectedCharacter]![1],
+                                // markerImg: _allCharacters[_selectedCharacter]![1],
+                                markerImg: _selectedCharacter!.vocation.image, 
                                 id: uuid.v4()
                               );
                               Provider.of<MarkerStore>(context, listen: false).addMarker(newMarker);

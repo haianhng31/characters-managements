@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_rpg/models/marker_window_model.dart';
-import 'package:flutter_rpg/services/firestore_marker_service.dart';
+import 'package:flutter_rpg/models/marker.dart';
+import 'package:flutter_rpg/services/marker_service.dart';
 
 
 class MarkerStore extends ChangeNotifier {
@@ -14,7 +14,7 @@ class MarkerStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void fetchMarkersOnce() async {
+  Future<void> fetchMarkersOnce() async {
     if (_markers.isEmpty) {
       try {
         final snapshot = await FirestoreMarkerService.getAllMarkers();
@@ -29,11 +29,11 @@ class MarkerStore extends ChangeNotifier {
     }
   }
 
-  Future<void> saveMarker(MarkerWindowModel marker) async {
-    await FirestoreMarkerService.updateMarker(marker);
-    notifyListeners();
-    return;
-  }
+  // Future<void> saveMarker(MarkerWindowModel marker) async {
+  //   await FirestoreMarkerService.updateMarker(marker);
+  //   notifyListeners();
+  //   return;
+  // }
 
   Future<void> removeMarker(MarkerWindowModel marker) async {
     await FirestoreMarkerService.deleteMarker(marker);

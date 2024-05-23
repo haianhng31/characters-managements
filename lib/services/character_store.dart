@@ -9,11 +9,16 @@ class CharacterStore extends ChangeNotifier {
   get characters => _characters;
 
   void addCharacter(Character character) {
-    FirestoreService.addCharacter(character);
-    _characters.add(character);
-    notifyListeners();
-    // notify any consumers in the app that we have changed it 
-    // the consumer can rerun the app to see the changes
+    try {
+      FirestoreService.addCharacter(character);
+      _characters.add(character);
+      notifyListeners();
+      // notify any consumers in the app that we have changed it 
+      // the consumer can rerun the app to see the changes
+    } catch (e) {
+      print('Error adding character: $e');
+    }
+    
   }
 
   void fetchCharactersOnce() async {
