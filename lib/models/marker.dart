@@ -31,7 +31,7 @@ class MarkerWindowModel {
   // getters 
   Map<String, dynamic> get markerWindowInfo => {
     // "characterId": characterId,
-    'character': character.toFirestore(),
+    'character': character.toMap(),
     "date": date,
     "lat": lat,
     "lng": lng,
@@ -43,7 +43,7 @@ class MarkerWindowModel {
 
   Map<String, dynamic> toFirestore() => {
     // "characterId": characterId,
-    "character": character.toFirestore(),
+    "character": character.toMap(),
     "date": date, 
     "lat": lat,
     "lng": lng,
