@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_rpg/screens/map/create_new_marker.dart';
+import 'package:flutter_rpg/screens/map/markerWindowWrapper.dart';
 import 'package:flutter_rpg/screens/map/marker_window.dart';
 import 'package:flutter_rpg/services/location_service.dart';
 import 'package:flutter_rpg/services/marker_store.dart';
@@ -12,6 +13,10 @@ import 'package:custom_info_window/custom_info_window.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart'; 
 import 'package:image/image.dart' as img;
+import 'package:flutter_rpg/services/firestore_service.dart';
+import 'package:flutter_rpg/models/character.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 
 
@@ -46,8 +51,8 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> initializeMarkers() async {
     Provider.of<MarkerStore>(context, listen: false).fetchMarkersOnce();
+    await _updateMarkers();
     setState(() {
-      _updateMarkers();
       markersInitialized = true; // Set the flag to indicate initialization is complete
     });
   }
@@ -88,16 +93,22 @@ class _MapPageState extends State<MapPage> {
     return _markerIcon!;
   }
 
-  void _updateMarkers() {
+  Future<void> _updateMarkers() async {
+    List<Marker> markers = await _fetchMarkers(Provider.of<MarkerStore>(context, listen: false).markers);
     setState(() {
-      _storeMarkers = _fetchMarkers(Provider.of<MarkerStore>(context, listen: false).markers);
+      _storeMarkers = markers;
     });
   }
 
-  List<Marker> _fetchMarkers(markersData) {
-    return markersData.map<Marker>((marker) {
-      // var markerIcon =_loadMarkerIcon(marker.markerImg);
-      return Marker(
+  Future<List<Marker>> _fetchMarkers(markersData) async {
+    List<Marker> markers = [];
+    print('fetching markers...');
+
+    for (var marker in markersData) {
+      // var character = await fetchCharacter(marker.characterId);
+      // var charactersAssociatedImages = await fetchCharactersAssociated(marker.characterIdsAssociated);
+      print('marker character name in map: ${marker.character.name}');
+      markers.add(Marker(
         markerId: MarkerId(marker.id),
         // icon: _markerIcon!,
         icon: BitmapDescriptor.defaultMarker,
@@ -106,17 +117,48 @@ class _MapPageState extends State<MapPage> {
         onTap: () {
           _customInfoWindowController.addInfoWindow!(
             MarkerWindow(
-              characterId: marker.characterId,
+              key: marker.id,
+              // characterId: marker.characterId,
+              character: marker.character,
               date: marker.date,
               characterIdsAssociated: marker.characterIdsAssociated,
+              // charactersAssociated: charactersAssociatedImages,
               description: marker.description,
             ),
             LatLng(marker.lat, marker.lng),
           );
         },
-      );
-    }).toList();
+      ));
+    }
+    // }).toList();
+    return markers;
   }
+
+  Future<Character> fetchCharacter(characterId) async {
+    DocumentSnapshot<Character> snapshot = await FirestoreService.getCharacter(characterId);
+    Character character = snapshot.data()!;
+    print("Character is fetched from Firestore: ${character.name}");
+    return character;
+  }
+
+  // Future<List<String>> fetchCharactersAssociated (characterIdsAssociated) async {
+  //   print("fetchCharactersAssociated started.");
+  //   List<String> images = [];
+  //   for (var id in characterIdsAssociated) {
+  //     DocumentSnapshot<Character> snapshot = await FirestoreService.getCharacter(id);
+  //     Character characterAssociated = snapshot.data()!;
+  //     print("characterAssociated img: ${characterAssociated.vocation.image}");
+  //     images.add('assets/img/vocations/${characterAssociated.vocation.image}');
+  //   }
+  //   // List<String> images = await Future.wait(characterIdsAssociated.map((id) async {
+  //   //   DocumentSnapshot<Character> snapshot = await FirestoreService.getCharacter(id);
+  //   //   Character characterAssociated = snapshot.data()!;
+  //   //   print("characterAssociated img: ${characterAssociated.vocation.image}");
+  //   //   return 'assets/img/vocations/${characterAssociated.vocation.image}';
+  //   // }).toList());
+  //   print("fetchCharactersAssociated result: $images");
+  //   return images;
+  // }
   
 
   @override

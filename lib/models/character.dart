@@ -36,6 +36,19 @@ class Character with Stats {
     skills.add(skill);
   }
 
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'slogan': slogan,
+      'vocation': vocation.toString(),
+      'id': id,
+      'isFav': _isFav,
+      'skills': skills.map((s)=> s.id).toList(),
+      'stats': statsAsMap,
+      'points': points,
+    };
+  }
+
   Map<String, dynamic> toFirestore() {
     // needs to return a map 
     return {
@@ -48,6 +61,21 @@ class Character with Stats {
       'points': points,
     }; 
   }
+
+  factory Character.fromMap(Map<String, dynamic> map) {
+    return Character(
+      name: map['name'],
+      slogan: map['slogan'],
+      vocation: Vocation.values.firstWhere((v) => v.toString() == map['vocation']),
+      id: map['id'],
+    );
+    // ..skills.addAll(map['skills'].map((skillId) => allSkills.firstWhere((skill) => skill.id == skillId)))
+    // ..setStats(
+    //   points: map['points'],
+    //   stats: map['stats'],
+    // )
+    // .._isFav = map['isFav'] ?? false;
+}
 
   factory Character.fromFirestore(
     // DocumentSnapshot: firestore sends back when we fetch data 

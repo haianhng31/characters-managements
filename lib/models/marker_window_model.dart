@@ -1,54 +1,54 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_rpg/models/character.dart';
 
 class MarkerWindowModel {
   // constructor
   MarkerWindowModel({
-    required this.characterId,
+    // required this.characterId,
+    required this.character,
     required this.date,
     required this.lat,
     required this.lng,
-    required this.characterIdsAssociated,
+    // required this.characterIdsAssociated,
+    required this.charactersAssociated,
     required this.description,
     required this.markerImg,
     required this.id
   });
 
   // fields 
-  final String characterId;
+  final Character character;
+  // final String characterId;
   final String date;
   final double lat;
   final double lng;
-  final List<String> characterIdsAssociated;
+  // final List<String> characterIdsAssociated;
+  final List<Character> charactersAssociated;
   final String description;
   final String markerImg;
   final String id;
-  // Character? character;
-
-  // Future<Character> _getCharacterInfo(String characterId) async {
-  //   DocumentSnapshot<Character> snapshot = await FirestoreService.getCharacter(characterId);
-  //   character = Character.fromFirestore(snapshot.data()!);
-  //   return character!;
-  // }
 
   // getters 
   Map<String, dynamic> get markerWindowInfo => {
-    "characterId": characterId,
+    // "characterId": characterId,
+    'character': character.toMap(),
     "date": date,
     "lat": lat,
     "lng": lng,
     // "characterIdsAssociated": characterIdsAssociated.map((char) => char.toFirestore()).toList(),
-    "characterIdsAssociated": characterIdsAssociated,
+    "characterIdsAssociated": charactersAssociated.map((character) => character.toMap()).toList(),
     "description": description,
     "markerImg": markerImg
   };
 
   Map<String, dynamic> toFirestore() => {
-    // "character": character.toFirestore(),
-    "characterId": characterId,
+    // "characterId": characterId,
+    'character': character.toMap(),
     "date": date, 
     "lat": lat,
     "lng": lng,
-    "characterIdsAssociated": characterIdsAssociated,
+    // "characterIdsAssociated": characterIdsAssociated,
+    "characterIdsAssociated": charactersAssociated.map((character) => character.toMap()).toList(),
     "description": description,
     "markerImg": markerImg
   };
@@ -56,18 +56,31 @@ class MarkerWindowModel {
   factory MarkerWindowModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> snapshot, SnapshotOptions? options) {
     final data = snapshot.data()!;
 
-    MarkerWindowModel marker = MarkerWindowModel(
-      characterId: data['characterId'], 
-      date: data['date'], 
+    return MarkerWindowModel(
+      // character: Character.fromFirestore(data['character']),
+      character: Character.fromMap(data['character']),
+      date: data['date'],
       lat: data['lat'],
-      lng: data['lng'], 
-      characterIdsAssociated: List<String>.from(data['characterIdsAssociated']),
-      description: data['description'], 
+      lng: data['lng'],
+      charactersAssociated:
+          (data['charactersAssociated'] as List).map((characterData) => Character.fromMap(characterData)).toList(),
+      description: data['description'],
       markerImg: data['markerImg'],
-      id: snapshot.id
+      id: data['id'],
     );
 
-    return marker;
+    // MarkerWindowModel marker = MarkerWindowModel(
+    //   characterId: data['characterId'], 
+    //   date: data['date'], 
+    //   lat: data['lat'],
+    //   lng: data['lng'], 
+    //   characterIdsAssociated: List<String>.from(data['characterIdsAssociated']),
+    //   description: data['description'], 
+    //   markerImg: data['markerImg'],
+    //   id: snapshot.id
+    // );
+
+    // return marker;
   }
 
 

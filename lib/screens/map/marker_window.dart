@@ -10,13 +10,16 @@ import 'package:flutter_rpg/shared/styled_text.dart';
 class MarkerWindow extends StatefulWidget {
   const MarkerWindow({
     super.key,
-    required this.characterId,
+    // required this.characterId,
+    required this.character,
     required this.date,
     required this.characterIdsAssociated,
+    // required this.charactersAssociated,
     required this.description,
   });
 
-  final String characterId;
+  // final String characterId;
+  final Character character;
   final String date;
   final List<String> characterIdsAssociated;
   final String description;
@@ -32,8 +35,8 @@ class _MarkerWindowState extends State<MarkerWindow> {
   bool isLoading = true;
 
   void fetchCharacters() async {
-    DocumentSnapshot<Character> snapshot = await FirestoreService.getCharacter(widget.characterId);
-    Character character = snapshot.data()!;
+    // DocumentSnapshot<Character> snapshot = await FirestoreService.getCharacter(widget.characterId);
+    // Character character = snapshot.data()!;
 
     List<String> images = await Future.wait(widget.characterIdsAssociated.map((id) async {
       DocumentSnapshot<Character> snapshot = await FirestoreService.getCharacter(id);
@@ -41,26 +44,38 @@ class _MarkerWindowState extends State<MarkerWindow> {
       return 'assets/img/vocations/${characterAssociated.vocation.image}';
     }).toList());
 
-    print("Character is fetched from Firestore: ${character.name}");
+    // print("Character is fetched from Firestore: ${character.name}");
 
     setState(() {
       charactersAssociated = images;
-      characterName = character.name;
-      characterImg = 'assets/img/vocations/${character.vocation.image}';
-      isLoading = false; 
+      // characterName = character.name;
+      // characterImg = 'assets/img/vocations/${character.vocation.image}';
+      // characterName = widget.character.name;
+      // characterImg = 'assets/img/vocations/${widget.character.vocation.image}';
+      // isLoading = false; 
     });
   }
 
   @override
   void initState() {
-    fetchCharacters();
+    // fetchCharacters();
+    loadData();
+    print('in marker window: $characterName, $characterImg');
     super.initState();
+  }
+
+  loadData() {
+    fetchCharacters();
+    characterName = widget.character.name;
+    characterImg = 'assets/img/vocations/${widget.character.vocation.image}';
+    isLoading = false; 
   }
 
   @override
   Widget build(BuildContext context) {
     return  Column(
-      children: isLoading ? [const Center(child: CircularProgressIndicator())] : 
+      children: 
+        isLoading ? [const Center(child: CircularProgressIndicator())] : 
       [
         Expanded(
           child: Container(
