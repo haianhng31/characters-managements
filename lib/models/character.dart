@@ -85,7 +85,23 @@ class Character with Stats {
 
     return character;
   }
+
+  factory Character.fromMap(Map<String, dynamic> map) {
+    return Character(
+      name: map['name'],
+      slogan: map['slogan'],
+      vocation: Vocation.values.firstWhere((v) => v.toString() == map['vocation']),
+      id: map['id'],
+    );
+    // ..skills.addAll(map['skills'].map((skillId) => allSkills.firstWhere((skill) => skill.id == skillId)))
+    // ..setStats(
+    //   points: map['points'],
+    //   stats: map['stats'],
+    // )
+    // .._isFav = map['isFav'] ?? false;
+  }
 }
+
 
 
 // dummy character data 
