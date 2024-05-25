@@ -8,13 +8,12 @@ import 'package:flutter_rpg/services/marker_store.dart';
 import 'package:flutter_rpg/shared/styled_text.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-// import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart'; 
 import 'package:image/image.dart' as img;
-
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class MapPage extends StatefulWidget {
@@ -29,13 +28,14 @@ class _MapPageState extends State<MapPage> {
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
   LatLng? _currentP;
 
+  // MARKERS
   bool markersInitialized = false;
-  
   late final CustomInfoWindowController _customInfoWindowController = CustomInfoWindowController();
   late List<Marker> _storeMarkers;
   final List<Marker> _newMarker = [];
   BitmapDescriptor? _markerIcon;
   late String _markerFilterCharacter = "";
+  late List<PointLatLng> _markerPositions = [];
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -43,6 +43,8 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     initializeMarkers();
     getLocationUpdates();
+    // initializePolylinePoints();
+    waitForMarkersInitialized();
     super.initState();
   }
 
@@ -68,6 +70,7 @@ class _MapPageState extends State<MapPage> {
     if (_markerFilterCharacter == "" || _markerFilterCharacter == null) {
       return markersData.map<Marker>((marker) {
         // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        setState(() => _markerPositions.add(PointLatLng(marker.lat, marker.lng)));
         return Marker(
           markerId: MarkerId(marker.id),
           // icon: _markerIcon!,
@@ -137,25 +140,79 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  Future<BitmapDescriptor> _loadMarkerIcon(imgPath) async {
-    ByteData byteData = await rootBundle.load(imgPath);
-    Uint8List bytes = byteData.buffer.asUint8List();
+  // Future<BitmapDescriptor> _loadMarkerIcon(imgPath) async {
+  //   ByteData byteData = await rootBundle.load(imgPath);
+  //   Uint8List bytes = byteData.buffer.asUint8List();
 
-    img.Image baseSizeImage = img.decodeImage(bytes)!;
-    img.Image resizedImage = img.copyResize(baseSizeImage, width: 60, height: 60);
-    // img.Image circularImage = img.copyCropCircle(resizedImage);
-    img.Image circularImage = img.copyCropCircle(resizedImage);
+  //   img.Image baseSizeImage = img.decodeImage(bytes)!;
+  //   img.Image resizedImage = img.copyResize(baseSizeImage, width: 60, height: 60);
+  //   // img.Image circularImage = img.copyCropCircle(resizedImage);
+  //   img.Image circularImage = img.copyCropCircle(resizedImage);
 
-    Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(circularImage));
-    _markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
-    return _markerIcon!;
-  }
+  //   Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(circularImage));
+  //   _markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
+  //   return _markerIcon!;
+  // }
 
   void onCharacterSelected(String characterId) {
     setState(() {
       _markerFilterCharacter = characterId;
     });
     _updateMarkers();
+  }
+
+  // POLYLINES 
+  Set<Polyline> polylines = {};
+  // List<LatLng> polylineCoordinates = [];
+  PolylinePoints polylinePoints = PolylinePoints();
+
+  Future<void> createPolylinePoints(PointLatLng origin, PointLatLng destination, Color color) async {
+    List<LatLng> polylineCoordinates = [];
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      dotenv.env['GOOGLE_MAPS_API_KEY']!,
+      origin,
+      destination);
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+
+      setState(() {
+        polylines.add(Polyline(
+          polylineId: PolylineId("polyline"),
+          color: color,
+          points: polylineCoordinates,
+          width: 5,
+        ));
+      });
+    } else {
+      print(result.errorMessage);
+    }
+  }
+
+  void initializePolylinePoints() {
+    // if (markersInitialized == true) {
+    //   print("markerPositions: $_markerPositions");
+    //   createPolylinePoints(PointLatLng(37.4206029, -122.0784778), PointLatLng(38, -122), Colors.blue);
+    //   createPolylinePoints(PointLatLng(38, -122), PointLatLng(38.1, -122), Colors.red);
+    // }
+    if (markersInitialized) {
+      print("markerPositions: $_markerPositions");
+      final List<Color> colors = [Colors.lightBlue[200]!, Colors.lightBlue[300]!, Colors.lightBlue[400]!, Colors.lightBlue, Colors.blue, Colors.blue[600]!];
+      for (int i = 0; i < _markerPositions.length - 1; i++) {
+        createPolylinePoints(_markerPositions[i], _markerPositions[i+1], colors[i]);
+      }
+    }
+  }
+
+  void waitForMarkersInitialized() {
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (markersInitialized) {
+        initializePolylinePoints();
+      } else {
+        waitForMarkersInitialized();  // Repeat the check until markersInitialized is true
+      }
+    });
   }
 
   @override
@@ -212,7 +269,6 @@ class _MapPageState extends State<MapPage> {
                           _customInfoWindowController.onCameraMove!();
                         },
                         markers: {
-                          // ...Set<Marker>.of(storeMarkers),
                           ...Set<Marker>.of(_storeMarkers),
                           ..._newMarker,
                           Marker(
@@ -225,6 +281,7 @@ class _MapPageState extends State<MapPage> {
                           )
                         },
                         // polylines: Set<Polyline>.of(polylines.values),
+                        polylines: polylines,
                       ),
 
                   CustomInfoWindow(
