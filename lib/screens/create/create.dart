@@ -1,3 +1,4 @@
+import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rpg/models/character.dart';
 import 'package:flutter_rpg/models/vocation.dart';
@@ -23,11 +24,23 @@ class CreateScreen extends StatefulWidget {
 class _CreateScreenState extends State<CreateScreen> {
   final _nameController = TextEditingController();
   final _sloganController = TextEditingController();
+  // final _backstoryController = TextEditingController();
+  late String _backstory = "";
+  final _locationController = TextEditingController();
+  final _characteristicController = TextEditingController();
+  final _occupationController = TextEditingController();
+  final _secretController = TextEditingController();
+  bool _isLoading = true;
   
   @override
   void dispose() {
     _nameController.dispose();
     _sloganController.dispose();
+    // _backstoryController.dispose();
+    _locationController.dispose();
+    _characteristicController.dispose();
+    _occupationController.dispose();
+    _secretController.dispose();
     super.dispose();
   }
 
@@ -38,6 +51,62 @@ class _CreateScreenState extends State<CreateScreen> {
     setState(() {
       selectedVocation = vocation;
     });
+  }
+
+  // generate backstory 
+  Future<void> _handleGenerateBackstory() async {
+    OpenAICompletionModel completion = await OpenAI.instance.completion.create(
+      model: "gpt-3.5-turbo-instruct",
+      prompt: "Generate a creative, out-of-the-box, impressive short backstory for a character named ${_nameController.text}, who lives in ${_locationController.text}, is very ${_characteristicController.text}, works as ${_occupationController.text} and has a secret: ${_secretController.text}. Write in less than 10 sentences. Make it interesting and funny.",
+      maxTokens: 200,
+      temperature: 0.5,
+    );
+    setState(() {
+      _backstory = completion.choices.first.text;
+      _isLoading = false;
+    });
+  }
+
+  void _generateBackstoryModal() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _handleGenerateBackstory();
+    if (!_isLoading) {
+      showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          return Container(
+            height: 350,
+            padding: const EdgeInsets.all(30),
+            color: AppColors.secondaryColor,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const StyledHeading("Backstory"),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        StyledText(_backstory),
+                        const SizedBox(height: 20),
+                        StyledButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const StyledHeading("Save"),
+                        )
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            ),
+          );
+        },
+      );
+    }
   }
 
   // submit handler 
@@ -80,12 +149,32 @@ class _CreateScreenState extends State<CreateScreen> {
         });
       return;
     }
+    if (_backstory.trim().isEmpty) {
+      showDialog(
+        context: context, 
+        builder: (ctx) {
+          return AlertDialog(
+            title: const StyledHeading("Haven't generated character backstory"),
+            content: const StyledText("The backstory makes the character alive."),
+            actions: [
+              StyledButton(
+                onPressed: (){
+                  Navigator.pop(ctx);
+                }, 
+                child: const StyledHeading("Close"))
+            ],
+            actionsAlignment: MainAxisAlignment.center,
+          );
+        });
+      return;
+    }
 
     Provider.of<CharacterStore>(context, listen: false).addCharacter(
       Character(
         name: _nameController.text.trim(), 
         slogan: _sloganController.text.trim(), 
         vocation: selectedVocation, 
+        backstory: _backstory,
         id: uuid.v4()
     ));
 
@@ -171,6 +260,68 @@ class _CreateScreenState extends State<CreateScreen> {
                 selected: selectedVocation == Vocation.raider,
                 onTap: _updateVocation,
                 vocation: Vocation.raider),
+
+              const SizedBox(height: 30),
+          
+              // write backstory 
+              Center(
+                child: Icon(Icons.code, color: AppColors.primaryColor)
+              ),
+              const Center(
+                child: StyledHeading("Generate your character backstory"),
+              ),
+              const Center(
+                child: StyledText("Tell the world how unique they are."),
+              ),
+              const SizedBox(height: 30),
+              TextField(
+                controller: _locationController,
+                style: GoogleFonts.kanit( textStyle: Theme.of(context).textTheme.bodyMedium),
+                cursorColor: AppColors.textColor,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.person_2),
+                  label: StyledText('Character location'),
+                ),
+              ),
+              const SizedBox(height: 20,),
+              TextField(
+                controller: _characteristicController,
+                style: GoogleFonts.kanit( textStyle: Theme.of(context).textTheme.bodyMedium),
+                cursorColor: AppColors.textColor,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.chat),
+                  label: StyledText("Describe how your character is as a person"),
+                ),
+              ),
+              const SizedBox(height: 20,),
+              TextField(
+                controller: _occupationController,
+                style: GoogleFonts.kanit( textStyle: Theme.of(context).textTheme.bodyMedium),
+                cursorColor: AppColors.textColor,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.chat),
+                  label: StyledText("Character occupation"),
+                ),
+              ),
+              const SizedBox(height: 20,),
+              TextField(
+                controller: _secretController,
+                style: GoogleFonts.kanit( textStyle: Theme.of(context).textTheme.bodyMedium),
+                cursorColor: AppColors.textColor,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.chat),
+                  label: StyledText("A very important secret..."),
+                ),
+              ),
+              const SizedBox(height: 20,),
+              StyledButton(
+                onPressed: () {
+                  _generateBackstoryModal();
+                }, 
+                child: const StyledHeading("Generate backstory")
+              ),
+
+              const SizedBox(height: 30,),
           
               Center(
                 child: Icon(Icons.code, color: AppColors.primaryColor)

@@ -39,6 +39,7 @@ class FirestoreService {
       'points': character.points,
       'skills': character.skills.map((s) => s.id).toList(),
       'isFav': character.isFav,
+      'backstory': character.backstory,
     });
   }
 
