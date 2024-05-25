@@ -191,11 +191,6 @@ class _MapPageState extends State<MapPage> {
   }
 
   void initializePolylinePoints() {
-    // if (markersInitialized == true) {
-    //   print("markerPositions: $_markerPositions");
-    //   createPolylinePoints(PointLatLng(37.4206029, -122.0784778), PointLatLng(38, -122), Colors.blue);
-    //   createPolylinePoints(PointLatLng(38, -122), PointLatLng(38.1, -122), Colors.red);
-    // }
     if (markersInitialized) {
       print("markerPositions: $_markerPositions");
       final List<Color> colors = [Colors.lightBlue[200]!, Colors.lightBlue[300]!, Colors.lightBlue[400]!, Colors.lightBlue, Colors.blue, Colors.blue[600]!];
