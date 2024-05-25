@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_rpg/models/character.dart';
 import 'package:flutter_rpg/screens/profile/heart.dart';
 import 'package:flutter_rpg/screens/profile/skill_list.dart';
@@ -98,6 +99,25 @@ class Profile extends StatelessWidget {
                   StatsTable(character),
                   SkillList(character)
                 ]
+              ),
+            ),
+
+            // backstory
+            const SizedBox(height: 4),
+            
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                width: double.infinity, // full screen width available
+                padding: const EdgeInsets.all(30),
+                color: AppColors.secondaryColor.withOpacity(0.5),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Center(child: StyledHeading('Backstory')),
+                    StyledText(character.backstory),
+                  ],
+                ),
               ),
             ),
             
