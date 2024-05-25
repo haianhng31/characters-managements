@@ -35,7 +35,6 @@ class _MapPageState extends State<MapPage> {
   final List<Marker> _newMarker = [];
   BitmapDescriptor? _markerIcon;
   late String _markerFilterCharacter = "";
-  late List<PointLatLng> _markerPositions = [];
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -43,8 +42,6 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     initializeMarkers();
     getLocationUpdates();
-    // initializePolylinePoints();
-    waitForMarkersInitialized();
     super.initState();
   }
 
@@ -65,12 +62,12 @@ class _MapPageState extends State<MapPage> {
   }
 
   List<Marker> _fetchMarkers(markersData) {
-    print('fetching markers...');
-
+    List<Marker> markers;
+    List<PointLatLng> markerPositions = [];
     if (_markerFilterCharacter == "" || _markerFilterCharacter == null) {
-      return markersData.map<Marker>((marker) {
+      markers = markersData.map<Marker>((marker) {
         // var markerIcon =_loadMarkerIcon(marker.markerImg);
-        setState(() => _markerPositions.add(PointLatLng(marker.lat, marker.lng)));
+        markerPositions.add(PointLatLng(marker.lat, marker.lng));
         return Marker(
           markerId: MarkerId(marker.id),
           // icon: _markerIcon!,
@@ -93,8 +90,9 @@ class _MapPageState extends State<MapPage> {
       }).toList();
     }
     else {
-      return markersData.where((marker) => marker.character.id == _markerFilterCharacter).map<Marker>((marker) {
+      markers = markersData.where((marker) => marker.character.id == _markerFilterCharacter).map<Marker>((marker) {
         // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        markerPositions.add(PointLatLng(marker.lat, marker.lng));
         return Marker(
           markerId: MarkerId(marker.id),
           // icon: _markerIcon!,
@@ -116,11 +114,13 @@ class _MapPageState extends State<MapPage> {
         );
       }).toList();
     } 
+    // print(polylines);
+    initializePolylinePoints(markerPositions);
+    return markers;
   }
 
   void _setMarker(LatLng pos) {
     setState(() {
-      // storeMarkers.add(
       _newMarker.add(
         Marker(
           markerId: MarkerId('marker'),
@@ -159,14 +159,14 @@ class _MapPageState extends State<MapPage> {
       _markerFilterCharacter = characterId;
     });
     _updateMarkers();
+    // initializePolylinePoints(_storeMarkers.map((marker) => PointLatLng(marker.position.latitude, marker.position.longitude)).toList());
   }
 
   // POLYLINES 
   Set<Polyline> polylines = {};
-  // List<LatLng> polylineCoordinates = [];
   PolylinePoints polylinePoints = PolylinePoints();
 
-  Future<void> createPolylinePoints(PointLatLng origin, PointLatLng destination, Color color) async {
+  Future<void> createPolylinePoints(PointLatLng origin, PointLatLng destination, Color color, Set<Polyline> polylines) async {
     List<LatLng> polylineCoordinates = [];
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       dotenv.env['GOOGLE_MAPS_API_KEY']!,
@@ -177,38 +177,44 @@ class _MapPageState extends State<MapPage> {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
       });
 
-      setState(() {
-        polylines.add(Polyline(
-          polylineId: PolylineId("polyline"),
-          color: color,
-          points: polylineCoordinates,
-          width: 5,
-        ));
-      });
+      polylines.add(Polyline(
+        polylineId: PolylineId("polyline"),
+        color: color,
+        points: polylineCoordinates,
+        width: 5,
+      ));
+
     } else {
       print(result.errorMessage);
     }
   }
 
-  void initializePolylinePoints() {
-    if (markersInitialized) {
-      print("markerPositions: $_markerPositions");
-      final List<Color> colors = [Colors.lightBlue[200]!, Colors.lightBlue[300]!, Colors.lightBlue[400]!, Colors.lightBlue, Colors.blue, Colors.blue[600]!];
-      for (int i = 0; i < _markerPositions.length - 1; i++) {
-        createPolylinePoints(_markerPositions[i], _markerPositions[i+1], colors[i]);
-      }
+  void initializePolylinePoints(List<PointLatLng> positions) async {
+    Set<Polyline> _polylines = {};
+    final List<Color> colors = [Colors.blue, Colors.red, Colors.green, Colors.yellow, Colors.purple, Colors.pink, Colors.orange, Colors.brown];
+    
+    // List<Future<void>> futures = [];
+    for (int i = 0; i < positions.length - 1; i++) {
+      createPolylinePoints(positions[i], positions[i+1], colors[i], _polylines);
+      // futures.add(createPolylinePoints(positions[i], positions[i + 1], colors[i % colors.length], _polylines));
     }
-  }
-
-  void waitForMarkersInitialized() {
-    Future.delayed(Duration(milliseconds: 100), () {
-      if (markersInitialized) {
-        initializePolylinePoints();
-      } else {
-        waitForMarkersInitialized();  // Repeat the check until markersInitialized is true
-      }
+    // await Future.wait(futures);
+    print("the polylines after created: $_polylines");
+    setState(() {
+      polylines.clear();
+      polylines = _polylines;
     });
   }
+
+  // void waitForMarkersInitialized() {
+  //   Future.delayed(Duration(milliseconds: 100), () {
+  //     if (markersInitialized) {
+  //       initializePolylinePoints();
+  //     } else {
+  //       waitForMarkersInitialized();  // Repeat the check until markersInitialized is true
+  //     }
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
