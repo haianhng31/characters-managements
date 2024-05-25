@@ -13,7 +13,8 @@ class Character with Stats {
     required this.name,
     required this.slogan,
     required this.vocation,
-    required this.id
+    required this.backstory,
+    required this.id,
   });
 
   // fields
@@ -21,6 +22,7 @@ class Character with Stats {
   final Vocation vocation;
   final String name;
   final String slogan;
+  final String backstory;
   final String id;
   bool _isFav = false;
 
@@ -43,6 +45,7 @@ class Character with Stats {
       'slogan': slogan,
       'isFav': _isFav,
       'vocation': vocation.toString(), //looks like: vocation.ninja
+      'backstory': backstory,
       'skills': skills.map((s)=> s.id).toList(),
       'stats': statsAsMap,
       'points': points,
@@ -65,6 +68,7 @@ class Character with Stats {
     Character character = Character(
       name: data['name'],
       slogan: data['slogan'],
+      backstory: data['backstory'],
       id: snapshot.id, 
       vocation: Vocation.values.firstWhere((element) => element.toString() == data['vocation']),
     );
@@ -91,6 +95,7 @@ class Character with Stats {
       name: map['name'],
       slogan: map['slogan'],
       vocation: Vocation.values.firstWhere((v) => v.toString() == map['vocation']),
+      backstory: map['backstory'],
       id: map['id'],
     );
     // ..skills.addAll(map['skills'].map((skillId) => allSkills.firstWhere((skill) => skill.id == skillId)))
@@ -107,6 +112,7 @@ class Character with Stats {
       'name': name,
       'slogan': slogan,
       'vocation': vocation.toString(), //looks like: vocation.ninja
+      'backstory': backstory,
       'id': id
     }; 
   }
@@ -115,9 +121,9 @@ class Character with Stats {
 
 
 // dummy character data 
-List<Character> characters = [
-  Character(id: '1', name: 'Klara', vocation: Vocation.wizard, slogan: 'Kapumf!'),
-  Character(id: '2', name: 'Jonny', vocation: Vocation.junkie, slogan: 'Light me up...'),
-  Character(id: '3', name: 'Crimson', vocation: Vocation.raider, slogan: 'Fire in the hole!'),
-  Character(id: '4', name: 'Shaun', vocation: Vocation.ninja, slogan: 'Alright then gang.'),
-];
+// List<Character> characters = [
+//   Character(id: '1', name: 'Klara', vocation: Vocation.wizard, slogan: 'Kapumf!'),
+//   Character(id: '2', name: 'Jonny', vocation: Vocation.junkie, slogan: 'Light me up...'),
+//   Character(id: '3', name: 'Crimson', vocation: Vocation.raider, slogan: 'Fire in the hole!'),
+//   Character(id: '4', name: 'Shaun', vocation: Vocation.ninja, slogan: 'Alright then gang.'),
+// ];
