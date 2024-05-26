@@ -120,7 +120,6 @@ class _MapPageState extends State<MapPage> {
 
   void _setMarker(LatLng pos) {
     setState(() {
-      // storeMarkers.add(
       _newMarker.add(
         Marker(
           markerId: MarkerId('marker'),
@@ -169,7 +168,6 @@ class _MapPageState extends State<MapPage> {
     img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
     Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(resizedImage));
     final markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
-    // final markerIcon = BitmapDescriptor.fromBytes(bytes.buffer.asUint8List());
     return markerIcon;
   }
 
@@ -208,8 +206,8 @@ class _MapPageState extends State<MapPage> {
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     hintText: "Search location...",
-                    hintStyle: TextStyle(color: Colors.white), // Change hint text color to white
-                    labelStyle: TextStyle(color: Colors.white), // Change label text color to white
+                    hintStyle: TextStyle(color: Colors.white), 
+                    labelStyle: TextStyle(color: Colors.white),
                   ),
                 )),
                 IconButton(
@@ -244,12 +242,10 @@ class _MapPageState extends State<MapPage> {
                           _customInfoWindowController.onCameraMove!();
                         },
                         markers: {
-                          // ...Set<Marker>.of(storeMarkers),
                           ...Set<Marker>.of(_storeMarkers),
                           ..._newMarker,
                           Marker(
                             markerId: const MarkerId("_currentLocation"),
-                            // icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
                             icon: currentMarkerIcon!,
                             position: _currentP!,
                             infoWindow: InfoWindow(
