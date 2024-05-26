@@ -30,9 +30,11 @@ class _MapPageState extends State<MapPage> {
   LatLng? _currentP;
 
   bool markersInitialized = false;
+  bool currentMarkerInitialized = false;
   
   late final CustomInfoWindowController _customInfoWindowController = CustomInfoWindowController();
   late List<Marker> _storeMarkers;
+  late Marker _currentPosMarker;
   final List<Marker> _newMarker = [];
   BitmapDescriptor? _markerIcon;
   late String _markerFilterCharacter = "";
@@ -43,6 +45,7 @@ class _MapPageState extends State<MapPage> {
   void initState() {
     initializeMarkers();
     getLocationUpdates();
+    initializeCurrentMarkerIcon();
     super.initState();
   }
 
@@ -117,7 +120,6 @@ class _MapPageState extends State<MapPage> {
 
   void _setMarker(LatLng pos) {
     setState(() {
-      // storeMarkers.add(
       _newMarker.add(
         Marker(
           markerId: MarkerId('marker'),
@@ -158,6 +160,34 @@ class _MapPageState extends State<MapPage> {
     _updateMarkers();
   }
 
+  late BitmapDescriptor? currentMarkerIcon;
+
+  Future<BitmapDescriptor> _loadCurrentMarkerIcon() async {
+    final bytes = await rootBundle.load('assets/img/map/currentPos2.png');
+    img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
+    img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
+    Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(resizedImage));
+    final markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
+    return markerIcon;
+  }
+
+  void initializeCurrentMarkerIcon() async {
+    try {
+      final markerIcon = await _loadCurrentMarkerIcon();
+      setState(() {
+        currentMarkerIcon = markerIcon;
+        currentMarkerInitialized = true;
+      });
+    } catch (e) {
+      print('Error loading current position marker icon: $e');
+      setState(() {
+        currentMarkerInitialized = true; // Still set to true to avoid infinite loading
+      });
+    }
+  }
+
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -165,7 +195,7 @@ class _MapPageState extends State<MapPage> {
         title: const StyledTitle("Map"),
         centerTitle: true,
       ),
-      body: (_currentP == null || markersInitialized == false )? const Center(child: CircularProgressIndicator()) : 
+      body: (_currentP == null || markersInitialized == false || currentMarkerInitialized == false )? const Center(child: CircularProgressIndicator()) : 
         Column(
           children: [
             Row(
@@ -176,8 +206,8 @@ class _MapPageState extends State<MapPage> {
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     hintText: "Search location...",
-                    hintStyle: TextStyle(color: Colors.white), // Change hint text color to white
-                    labelStyle: TextStyle(color: Colors.white), // Change label text color to white
+                    hintStyle: TextStyle(color: Colors.white), 
+                    labelStyle: TextStyle(color: Colors.white),
                   ),
                 )),
                 IconButton(
@@ -212,12 +242,11 @@ class _MapPageState extends State<MapPage> {
                           _customInfoWindowController.onCameraMove!();
                         },
                         markers: {
-                          // ...Set<Marker>.of(storeMarkers),
                           ...Set<Marker>.of(_storeMarkers),
                           ..._newMarker,
                           Marker(
                             markerId: const MarkerId("_currentLocation"),
-                            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+                            icon: currentMarkerIcon!,
                             position: _currentP!,
                             infoWindow: InfoWindow(
                               title: "Current Location",
