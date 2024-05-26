@@ -78,6 +78,7 @@ flutter:
   assets:
     - assets/img/vocations/
     - assets/img/skills/
+    - assets/img/map/
     - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
