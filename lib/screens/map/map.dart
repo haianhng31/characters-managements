@@ -121,7 +121,8 @@ class _MapPageState extends State<MapPage> {
         Marker(
           markerId: MarkerId('marker'),
           position: pos,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          // icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          icon: pointMarkerIcon!,
           onTap: () {
             _customInfoWindowController.addInfoWindow!(
               CreateMarkerWindow(
@@ -167,9 +168,10 @@ class _MapPageState extends State<MapPage> {
   }
 
   late BitmapDescriptor? currentMarkerIcon;
+  late BitmapDescriptor? pointMarkerIcon;
 
-  Future<BitmapDescriptor> _loadCurrentMarkerIcon() async {
-    final bytes = await rootBundle.load('assets/img/map/currentPos2.png');
+  Future<BitmapDescriptor> _loadCurrentMarkerIcon(imgPath) async {
+    final bytes = await rootBundle.load(imgPath);
     img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
     img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
     Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(resizedImage));
@@ -179,9 +181,11 @@ class _MapPageState extends State<MapPage> {
 
   void initializeCurrentMarkerIcon() async {
     try {
-      final markerIcon = await _loadCurrentMarkerIcon();
+      final markerIcon = await _loadCurrentMarkerIcon('assets/img/map/currentPos2.png');
+      final pointIcon = await _loadCurrentMarkerIcon('assets/img/map/location-pin2.png');
       setState(() {
         currentMarkerIcon = markerIcon;
+        pointMarkerIcon = pointIcon;
         currentMarkerInitialized = true;
       });
     } catch (e) {
