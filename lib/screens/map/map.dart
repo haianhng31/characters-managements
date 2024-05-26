@@ -68,7 +68,7 @@ class _MapPageState extends State<MapPage> {
   List<Marker> _fetchMarkers(markersData) {
     List<Marker> markers;
     List<PointLatLng> markerPositions = [];
-    if (_markerFilterCharacter == "" || _markerFilterCharacter == null) {
+    if (_markerFilterCharacter == "") {
       markers = markersData.map<Marker>((marker) {
         var markerIcon = _allMarkerIcons[marker.character.vocation.toString()];
         markerPositions.add(PointLatLng(marker.lat, marker.lng));
