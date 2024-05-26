@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_rpg/models/vocation.dart';
 import 'package:flutter_rpg/screens/map/create_new_marker.dart';
 import 'package:flutter_rpg/screens/map/marker_filter.dart';
 import 'package:flutter_rpg/screens/map/marker_window.dart';
@@ -34,18 +35,18 @@ class _MapPageState extends State<MapPage> {
   
   late final CustomInfoWindowController _customInfoWindowController = CustomInfoWindowController();
   late List<Marker> _storeMarkers;
-  late Marker _currentPosMarker;
   final List<Marker> _newMarker = [];
-  BitmapDescriptor? _markerIcon;
+  Map<String, BitmapDescriptor> _allMarkerIcons = {};
   late String _markerFilterCharacter = "";
 
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
-    initializeMarkers();
+    // initializeMarkers();
     getLocationUpdates();
     initializeCurrentMarkerIcon();
+    _loadAllMarkerIcons(); // this is where initializeMarkers() is
     super.initState();
   }
 
@@ -53,7 +54,7 @@ class _MapPageState extends State<MapPage> {
     await Provider.of<MarkerStore>(context, listen: false).fetchMarkersOnce();
     _updateMarkers();
     setState(() {
-      markersInitialized = true; // Set the flag to indicate initialization is complete
+      markersInitialized = true; 
     });
   }
 
@@ -66,15 +67,12 @@ class _MapPageState extends State<MapPage> {
   }
 
   List<Marker> _fetchMarkers(markersData) {
-    print('fetching markers...');
-
     if (_markerFilterCharacter == "" || _markerFilterCharacter == null) {
       return markersData.map<Marker>((marker) {
-        // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        var markerIcon = _allMarkerIcons[marker.character.vocation.toString()];
         return Marker(
           markerId: MarkerId(marker.id),
-          // icon: _markerIcon!,
-          icon: BitmapDescriptor.defaultMarker,
+          icon: markerIcon!,
           position: LatLng(marker.lat, marker.lng),
           draggable: true,
           onTap: () {
@@ -94,11 +92,10 @@ class _MapPageState extends State<MapPage> {
     }
     else {
       return markersData.where((marker) => marker.character.id == _markerFilterCharacter).map<Marker>((marker) {
-        // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        var markerIcon = _allMarkerIcons[marker.character.vocation.toString()];
         return Marker(
           markerId: MarkerId(marker.id),
-          // icon: _markerIcon!,
-          icon: BitmapDescriptor.defaultMarker,
+          icon: markerIcon!,
           position: LatLng(marker.lat, marker.lng),
           draggable: true,
           onTap: () {
@@ -124,7 +121,8 @@ class _MapPageState extends State<MapPage> {
         Marker(
           markerId: MarkerId('marker'),
           position: pos,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          // icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          icon: pointMarkerIcon!,
           onTap: () {
             _customInfoWindowController.addInfoWindow!(
               CreateMarkerWindow(
@@ -139,18 +137,27 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  void _loadAllMarkerIcons() async {
+    List<Vocation> vocations = Vocation.values.toList();
+    Map<String, BitmapDescriptor> icons = {};
+    for (Vocation vocation in vocations) {
+      BitmapDescriptor icon = await _loadMarkerIcon('assets/img/vocations/${vocation.image}');
+      icons[vocation.toString()] = icon;
+    }
+    setState(() {
+      _allMarkerIcons = icons;
+    });
+    await initializeMarkers();
+  }
+
   Future<BitmapDescriptor> _loadMarkerIcon(imgPath) async {
-    ByteData byteData = await rootBundle.load(imgPath);
-    Uint8List bytes = byteData.buffer.asUint8List();
-
-    img.Image baseSizeImage = img.decodeImage(bytes)!;
-    img.Image resizedImage = img.copyResize(baseSizeImage, width: 60, height: 60);
-    // img.Image circularImage = img.copyCropCircle(resizedImage);
+    final bytes = await rootBundle.load(imgPath);
+    img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
+    img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
     img.Image circularImage = img.copyCropCircle(resizedImage);
-
     Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(circularImage));
-    _markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
-    return _markerIcon!;
+    final markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
+    return markerIcon;
   }
 
   void onCharacterSelected(String characterId) {
@@ -161,9 +168,10 @@ class _MapPageState extends State<MapPage> {
   }
 
   late BitmapDescriptor? currentMarkerIcon;
+  late BitmapDescriptor? pointMarkerIcon;
 
-  Future<BitmapDescriptor> _loadCurrentMarkerIcon() async {
-    final bytes = await rootBundle.load('assets/img/map/currentPos2.png');
+  Future<BitmapDescriptor> _loadCurrentMarkerIcon(imgPath) async {
+    final bytes = await rootBundle.load(imgPath);
     img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
     img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
     Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(resizedImage));
@@ -173,9 +181,11 @@ class _MapPageState extends State<MapPage> {
 
   void initializeCurrentMarkerIcon() async {
     try {
-      final markerIcon = await _loadCurrentMarkerIcon();
+      final markerIcon = await _loadCurrentMarkerIcon('assets/img/map/currentPos2.png');
+      final pointIcon = await _loadCurrentMarkerIcon('assets/img/map/location-pin2.png');
       setState(() {
         currentMarkerIcon = markerIcon;
+        pointMarkerIcon = pointIcon;
         currentMarkerInitialized = true;
       });
     } catch (e) {
@@ -185,8 +195,6 @@ class _MapPageState extends State<MapPage> {
       });
     }
   }
-
-  
 
   @override
   Widget build(BuildContext context) {
