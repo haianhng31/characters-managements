@@ -38,3 +38,17 @@ class StyledTitle extends StatelessWidget {
     ));
   }
 }
+
+class StyledErrorText extends StatelessWidget {
+  const StyledErrorText(this.text, {super.key});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, style: GoogleFonts.poppins(
+        textStyle: const TextStyle(color: Colors.red),
+      )
+    );
+  }
+}

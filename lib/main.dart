@@ -1,6 +1,7 @@
 import 'package:dart_openai/dart_openai.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rpg/screens/home/home.dart';
+import 'package:flutter_rpg/screens/welcome/welcome.dart';
 import 'package:flutter_rpg/services/character_store.dart';
 import 'package:flutter_rpg/services/marker_store.dart';
 import 'package:flutter_rpg/shared/styled_button.dart';
@@ -37,7 +38,7 @@ void main() async {
     ],
     child: MaterialApp(
       theme: primaryTheme,
-      home: const Home()
+      home: const WelcomeScreen()
     ),
     ),
   );
