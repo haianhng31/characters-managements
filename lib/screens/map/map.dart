@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_rpg/models/vocation.dart';
 import 'package:flutter_rpg/screens/map/create_new_marker.dart';
 import 'package:flutter_rpg/screens/map/marker_filter.dart';
 import 'package:flutter_rpg/screens/map/marker_window.dart';
@@ -30,18 +31,21 @@ class _MapPageState extends State<MapPage> {
 
   // MARKERS
   bool markersInitialized = false;
+  bool currentMarkerInitialized = false;
   late final CustomInfoWindowController _customInfoWindowController = CustomInfoWindowController();
   late List<Marker> _storeMarkers;
   final List<Marker> _newMarker = [];
-  BitmapDescriptor? _markerIcon;
+  Map<String, BitmapDescriptor> _allMarkerIcons = {};
   late String _markerFilterCharacter = "";
 
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
-    initializeMarkers();
+    // initializeMarkers();
     getLocationUpdates();
+    initializeCurrentMarkerIcon();
+    _loadAllMarkerIcons(); // this is where initializeMarkers() is
     super.initState();
   }
 
@@ -49,7 +53,7 @@ class _MapPageState extends State<MapPage> {
     await Provider.of<MarkerStore>(context, listen: false).fetchMarkersOnce();
     _updateMarkers();
     setState(() {
-      markersInitialized = true; // Set the flag to indicate initialization is complete
+      markersInitialized = true; 
     });
   }
 
@@ -66,12 +70,11 @@ class _MapPageState extends State<MapPage> {
     List<PointLatLng> markerPositions = [];
     if (_markerFilterCharacter == "" || _markerFilterCharacter == null) {
       markers = markersData.map<Marker>((marker) {
-        // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        var markerIcon = _allMarkerIcons[marker.character.vocation.toString()];
         markerPositions.add(PointLatLng(marker.lat, marker.lng));
         return Marker(
           markerId: MarkerId(marker.id),
-          // icon: _markerIcon!,
-          icon: BitmapDescriptor.defaultMarker,
+          icon: markerIcon!,
           position: LatLng(marker.lat, marker.lng),
           draggable: true,
           onTap: () {
@@ -91,12 +94,11 @@ class _MapPageState extends State<MapPage> {
     }
     else {
       markers = markersData.where((marker) => marker.character.id == _markerFilterCharacter).map<Marker>((marker) {
-        // var markerIcon =_loadMarkerIcon(marker.markerImg);
+        var markerIcon = _allMarkerIcons[marker.character.vocation.toString()];
         markerPositions.add(PointLatLng(marker.lat, marker.lng));
         return Marker(
           markerId: MarkerId(marker.id),
-          // icon: _markerIcon!,
-          icon: BitmapDescriptor.defaultMarker,
+          icon: markerIcon!,
           position: LatLng(marker.lat, marker.lng),
           draggable: true,
           onTap: () {
@@ -125,7 +127,8 @@ class _MapPageState extends State<MapPage> {
         Marker(
           markerId: MarkerId('marker'),
           position: pos,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          // icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          icon: pointMarkerIcon!,
           onTap: () {
             _customInfoWindowController.addInfoWindow!(
               CreateMarkerWindow(
@@ -140,19 +143,28 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  // Future<BitmapDescriptor> _loadMarkerIcon(imgPath) async {
-  //   ByteData byteData = await rootBundle.load(imgPath);
-  //   Uint8List bytes = byteData.buffer.asUint8List();
+  void _loadAllMarkerIcons() async {
+    List<Vocation> vocations = Vocation.values.toList();
+    Map<String, BitmapDescriptor> icons = {};
+    for (Vocation vocation in vocations) {
+      BitmapDescriptor icon = await _loadMarkerIcon('assets/img/vocations/${vocation.image}');
+      icons[vocation.toString()] = icon;
+    }
+    setState(() {
+      _allMarkerIcons = icons;
+    });
+    await initializeMarkers();
+  }
 
-  //   img.Image baseSizeImage = img.decodeImage(bytes)!;
-  //   img.Image resizedImage = img.copyResize(baseSizeImage, width: 60, height: 60);
-  //   // img.Image circularImage = img.copyCropCircle(resizedImage);
-  //   img.Image circularImage = img.copyCropCircle(resizedImage);
-
-  //   Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(circularImage));
-  //   _markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
-  //   return _markerIcon!;
-  // }
+  Future<BitmapDescriptor> _loadMarkerIcon(imgPath) async {
+    final bytes = await rootBundle.load(imgPath);
+    img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
+    img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
+    img.Image circularImage = img.copyCropCircle(resizedImage);
+    Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(circularImage));
+    final markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
+    return markerIcon;
+  }
 
   void onCharacterSelected(String characterId) {
     setState(() {
@@ -162,11 +174,40 @@ class _MapPageState extends State<MapPage> {
     // initializePolylinePoints(_storeMarkers.map((marker) => PointLatLng(marker.position.latitude, marker.position.longitude)).toList());
   }
 
+  late BitmapDescriptor? currentMarkerIcon;
+  late BitmapDescriptor? pointMarkerIcon;
+
+  Future<BitmapDescriptor> _loadCurrentMarkerIcon(imgPath) async {
+    final bytes = await rootBundle.load(imgPath);
+    img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
+    img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
+    Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(resizedImage));
+    final markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
+    return markerIcon;
+  }
+
+  void initializeCurrentMarkerIcon() async {
+    try {
+      final markerIcon = await _loadCurrentMarkerIcon('assets/img/map/currentPos2.png');
+      final pointIcon = await _loadCurrentMarkerIcon('assets/img/map/location-pin2.png');
+      setState(() {
+        currentMarkerIcon = markerIcon;
+        pointMarkerIcon = pointIcon;
+        currentMarkerInitialized = true;
+      });
+    } catch (e) {
+      print('Error loading current position marker icon: $e');
+      setState(() {
+        currentMarkerInitialized = true; // Still set to true to avoid infinite loading
+      });
+    }
+  }
+
   // POLYLINES 
   Set<Polyline> polylines = {};
   PolylinePoints polylinePoints = PolylinePoints();
 
-  Future<void> createPolylinePoints(PointLatLng origin, PointLatLng destination, Color color, Set<Polyline> polylines) async {
+  Future<void> createPolylinePoints(PointLatLng origin, PointLatLng destination, Color color, Set<Polyline> _polylines) async {
     List<LatLng> polylineCoordinates = [];
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
       dotenv.env['GOOGLE_MAPS_API_KEY']!,
@@ -177,7 +218,7 @@ class _MapPageState extends State<MapPage> {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
       });
 
-      polylines.add(Polyline(
+      _polylines.add(Polyline(
         polylineId: PolylineId("polyline"),
         color: color,
         points: polylineCoordinates,
@@ -193,28 +234,15 @@ class _MapPageState extends State<MapPage> {
     Set<Polyline> _polylines = {};
     final List<Color> colors = [Colors.blue, Colors.red, Colors.green, Colors.yellow, Colors.purple, Colors.pink, Colors.orange, Colors.brown];
     
-    // List<Future<void>> futures = [];
     for (int i = 0; i < positions.length - 1; i++) {
       createPolylinePoints(positions[i], positions[i+1], colors[i], _polylines);
-      // futures.add(createPolylinePoints(positions[i], positions[i + 1], colors[i % colors.length], _polylines));
     }
-    // await Future.wait(futures);
     print("the polylines after created: $_polylines");
     setState(() {
       polylines.clear();
       polylines = _polylines;
     });
   }
-
-  // void waitForMarkersInitialized() {
-  //   Future.delayed(Duration(milliseconds: 100), () {
-  //     if (markersInitialized) {
-  //       initializePolylinePoints();
-  //     } else {
-  //       waitForMarkersInitialized();  // Repeat the check until markersInitialized is true
-  //     }
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +251,7 @@ class _MapPageState extends State<MapPage> {
         title: const StyledTitle("Map"),
         centerTitle: true,
       ),
-      body: (_currentP == null || markersInitialized == false )? const Center(child: CircularProgressIndicator()) : 
+      body: (_currentP == null || markersInitialized == false || currentMarkerInitialized == false )? const Center(child: CircularProgressIndicator()) : 
         Column(
           children: [
             Row(
@@ -234,8 +262,8 @@ class _MapPageState extends State<MapPage> {
                   style: const TextStyle(color: Colors.white),
                   decoration: const InputDecoration(
                     hintText: "Search location...",
-                    hintStyle: TextStyle(color: Colors.white), // Change hint text color to white
-                    labelStyle: TextStyle(color: Colors.white), // Change label text color to white
+                    hintStyle: TextStyle(color: Colors.white), 
+                    labelStyle: TextStyle(color: Colors.white),
                   ),
                 )),
                 IconButton(
@@ -274,7 +302,7 @@ class _MapPageState extends State<MapPage> {
                           ..._newMarker,
                           Marker(
                             markerId: const MarkerId("_currentLocation"),
-                            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+                            icon: currentMarkerIcon!,
                             position: _currentP!,
                             infoWindow: InfoWindow(
                               title: "Current Location",
