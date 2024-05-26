@@ -9,13 +9,12 @@ import 'package:flutter_rpg/services/marker_store.dart';
 import 'package:flutter_rpg/shared/styled_text.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
-// import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart'; 
 import 'package:image/image.dart' as img;
-
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
 class MapPage extends StatefulWidget {
@@ -30,9 +29,9 @@ class _MapPageState extends State<MapPage> {
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
   LatLng? _currentP;
 
+  // MARKERS
   bool markersInitialized = false;
   bool currentMarkerInitialized = false;
-  
   late final CustomInfoWindowController _customInfoWindowController = CustomInfoWindowController();
   late List<Marker> _storeMarkers;
   final List<Marker> _newMarker = [];
@@ -67,9 +66,12 @@ class _MapPageState extends State<MapPage> {
   }
 
   List<Marker> _fetchMarkers(markersData) {
-    if (_markerFilterCharacter == "" || _markerFilterCharacter == null) {
-      return markersData.map<Marker>((marker) {
+    List<Marker> markers;
+    List<PointLatLng> markerPositions = [];
+    if (_markerFilterCharacter == "") {
+      markers = markersData.map<Marker>((marker) {
         var markerIcon = _allMarkerIcons[marker.character.vocation.toString()];
+        markerPositions.add(PointLatLng(marker.lat, marker.lng));
         return Marker(
           markerId: MarkerId(marker.id),
           icon: markerIcon!,
@@ -91,8 +93,9 @@ class _MapPageState extends State<MapPage> {
       }).toList();
     }
     else {
-      return markersData.where((marker) => marker.character.id == _markerFilterCharacter).map<Marker>((marker) {
+      markers = markersData.where((marker) => marker.character.id == _markerFilterCharacter).map<Marker>((marker) {
         var markerIcon = _allMarkerIcons[marker.character.vocation.toString()];
+        markerPositions.add(PointLatLng(marker.lat, marker.lng));
         return Marker(
           markerId: MarkerId(marker.id),
           icon: markerIcon!,
@@ -113,6 +116,9 @@ class _MapPageState extends State<MapPage> {
         );
       }).toList();
     } 
+    // print(polylines);
+    initializePolylinePoints(markerPositions);
+    return markers;
   }
 
   void _setMarker(LatLng pos) {
@@ -165,6 +171,7 @@ class _MapPageState extends State<MapPage> {
       _markerFilterCharacter = characterId;
     });
     _updateMarkers();
+    // initializePolylinePoints(_storeMarkers.map((marker) => PointLatLng(marker.position.latitude, marker.position.longitude)).toList());
   }
 
   late BitmapDescriptor? currentMarkerIcon;
@@ -194,6 +201,47 @@ class _MapPageState extends State<MapPage> {
         currentMarkerInitialized = true; // Still set to true to avoid infinite loading
       });
     }
+  }
+
+  // POLYLINES 
+  Set<Polyline> polylines = {};
+  PolylinePoints polylinePoints = PolylinePoints();
+
+  Future<void> createPolylinePoints(PointLatLng origin, PointLatLng destination, Color color, Set<Polyline> _polylines) async {
+    List<LatLng> polylineCoordinates = [];
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      dotenv.env['GOOGLE_MAPS_API_KEY']!,
+      origin,
+      destination);
+    if (result.points.isNotEmpty) {
+      result.points.forEach((PointLatLng point) {
+        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
+      });
+
+      _polylines.add(Polyline(
+        polylineId: PolylineId("polyline"),
+        color: color,
+        points: polylineCoordinates,
+        width: 5,
+      ));
+
+    } else {
+      print(result.errorMessage);
+    }
+  }
+
+  void initializePolylinePoints(List<PointLatLng> positions) async {
+    Set<Polyline> _polylines = {};
+    final List<Color> colors = [Colors.blue, Colors.red, Colors.green, Colors.yellow, Colors.purple, Colors.pink, Colors.orange, Colors.brown];
+    
+    for (int i = 0; i < positions.length - 1; i++) {
+      createPolylinePoints(positions[i], positions[i+1], colors[i], _polylines);
+    }
+    print("the polylines after created: $_polylines");
+    setState(() {
+      polylines.clear();
+      polylines = _polylines;
+    });
   }
 
   @override
@@ -262,6 +310,7 @@ class _MapPageState extends State<MapPage> {
                           )
                         },
                         // polylines: Set<Polyline>.of(polylines.values),
+                        polylines: polylines,
                       ),
 
                   CustomInfoWindow(

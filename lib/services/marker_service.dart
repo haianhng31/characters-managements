@@ -18,7 +18,8 @@ class FirestoreMarkerService {
 
   // Get all markers 
   static Future<QuerySnapshot<MarkerWindowModel>> getAllMarkers() async {
-    return await ref.get();
+    // return await ref.get();
+    return await ref.orderBy('date').get();
   }
 
   // get one Marker 
