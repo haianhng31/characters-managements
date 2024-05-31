@@ -4,6 +4,7 @@ import 'package:flutter_rpg/models/character.dart';
 import 'package:flutter_rpg/models/vocation.dart';
 import 'package:flutter_rpg/screens/create/vocation_card.dart';
 import 'package:flutter_rpg/screens/home/home.dart';
+import 'package:flutter_rpg/screens/map/map.dart';
 import 'package:flutter_rpg/services/character_store.dart';
 import 'package:flutter_rpg/shared/styled_button.dart';
 import 'package:flutter_rpg/shared/styled_text.dart';
@@ -31,6 +32,30 @@ class _CreateScreenState extends State<CreateScreen> {
   final _occupationController = TextEditingController();
   final _secretController = TextEditingController();
   bool _isLoading = true;
+
+  int _selectedIndex = 1;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (_selectedIndex == 0) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Home(),
+        ),
+      );
+    }
+    else if (_selectedIndex == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MapPage(),
+        ),
+      );
+    }
+  }
   
   @override
   void dispose() {
@@ -345,6 +370,28 @@ class _CreateScreenState extends State<CreateScreen> {
           ),
         )
       ),
+
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.secondaryColor,
+        items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.draw),
+              label: 'Create new',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map),
+              label: 'Location',
+            ),
+          ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.white, 
+        onTap: _onItemTapped,
+      )
     );
   }
 }
