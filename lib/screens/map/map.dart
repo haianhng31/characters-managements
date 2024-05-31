@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_rpg/models/vocation.dart';
 import 'package:flutter_rpg/screens/map/create_new_marker.dart';
 import 'package:flutter_rpg/screens/map/marker_filter.dart';
@@ -204,6 +205,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   // POLYLINES 
+  bool isShowingPolyline = false;
   Set<Polyline> polylines = {};
   PolylinePoints polylinePoints = PolylinePoints();
 
@@ -252,90 +254,117 @@ class _MapPageState extends State<MapPage> {
         centerTitle: true,
       ),
       body: (_currentP == null || markersInitialized == false || currentMarkerInitialized == false )? const Center(child: CircularProgressIndicator()) : 
-        Column(
+        Stack(
           children: [
-            Row(
+            Stack(
               children: [
-                Expanded(child: TextFormField(
-                  controller: _searchController,
-                  textCapitalization: TextCapitalization.words,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    hintText: "Search location...",
-                    hintStyle: TextStyle(color: Colors.white), 
-                    labelStyle: TextStyle(color: Colors.white),
-                  ),
-                )),
-                IconButton(
-                  onPressed: () async {
-                    var place = await LocationService().getPlace(_searchController.text);
-                    _toPlace(place);
-                  }, 
-                  icon: const Icon(Icons.search))
-              ],),
+                GoogleMap(
+                  mapType: MapType.terrain,
+                  initialCameraPosition: CameraPosition(
+                    target: _currentP!,
+                    zoom: 13,),
+                  onMapCreated: (GoogleMapController controller) {
+                    _mapController.complete(controller);
+                    _customInfoWindowController.googleMapController = controller;
+                  },
+                  onTap: (position) async {
+                    _customInfoWindowController.hideInfoWindow!();
+                    // var place = await LocationService().getPlaceIdFromLocation(position);
+                    _setMarker(position);
+                  },
+                  onCameraMove: (position) {
+                    _customInfoWindowController.onCameraMove!();
+                  },
+                  markers: {
+                    ...Set<Marker>.of(_storeMarkers),
+                    ..._newMarker,
+                    Marker(
+                      markerId: const MarkerId("_currentLocation"),
+                      icon: currentMarkerIcon!,
+                      position: _currentP!,
+                      infoWindow: InfoWindow(
+                        title: "Current Location",
+                        snippet: "${_currentP!.latitude}, ${_currentP!.longitude}",)
+                    )
+                  },
+                  polylines: isShowingPolyline ? polylines :  {},
+                ),
 
-            MarkerFilter(onCharacterSelected: onCharacterSelected),
+              CustomInfoWindow(
+                controller: _customInfoWindowController,
+                height: 210,
+                width: 270,
+                offset: 45),
+                ],
+            ),
 
-
-            Expanded(
-              child: Stack(
+            Positioned(
+              bottom: 15.0, 
+              left: 20.0, 
+              child: Row(
                 children: [
-                      GoogleMap(
-                        mapType: MapType.terrain,
-                        initialCameraPosition: CameraPosition(
-                          target: _currentP!,
-                          zoom: 13,),
-                        onMapCreated: (GoogleMapController controller) {
-                          _mapController.complete(controller);
-                          _customInfoWindowController.googleMapController = controller;
-                        },
-                        onTap: (position) async {
-                          _customInfoWindowController.hideInfoWindow!();
-                          // var place = await LocationService().getPlaceIdFromLocation(position);
-                          _setMarker(position);
-                        },
-                        onCameraMove: (position) {
-                          _customInfoWindowController.onCameraMove!();
-                        },
-                        markers: {
-                          ...Set<Marker>.of(_storeMarkers),
-                          ..._newMarker,
-                          Marker(
-                            markerId: const MarkerId("_currentLocation"),
-                            icon: currentMarkerIcon!,
-                            position: _currentP!,
-                            infoWindow: InfoWindow(
-                              title: "Current Location",
-                              snippet: "${_currentP!.latitude}, ${_currentP!.longitude}",)
-                          )
-                        },
-                        // polylines: Set<Polyline>.of(polylines.values),
-                        polylines: polylines,
-                      ),
+                  IconButton(
+                    onPressed: _toCurrentLocation,
+                    icon: const Icon(Icons.my_location_outlined),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        isShowingPolyline = !isShowingPolyline;
+                      });
+                    },
+                    icon: const Icon(Icons.route),
+                  ),
+            ],)),
 
-                  CustomInfoWindow(
-                    controller: _customInfoWindowController,
-                    height: 210,
-                    width: 270,
-                    offset: 45),
+            Positioned(
+              top: 15.0, 
+              left: 20.0, 
+              right: 20.0, 
+              child: Column(
+                children: [
+                  Stack(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                        child: TextFormField(
+                          controller: _searchController,
+                          textCapitalization: TextCapitalization.words,
+                          style: const TextStyle(color: Colors.black),
+                          decoration: InputDecoration(
+                            hintText: "Search location...",
+                            hintStyle: const TextStyle(color: Colors.grey), 
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder( // Define border
+                              borderRadius: BorderRadius.circular(50.0), // Set border radius
+                              borderSide: BorderSide.none, // Remove border side
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 15.0),
+                          ),
+                        )
+                      ),
+                  
+                      Positioned(
+                        right: 20.0, 
+                        top: 0, 
+                        bottom: 0, 
+                        child: IconButton(
+                          onPressed: () async {
+                            var place = await LocationService().getPlace(_searchController.text);
+                            _toPlace(place);
+                          },
+                          icon: const Icon(Icons.search),
+                        ),
+                      ),
+                  ],),
+                  
+                  MarkerFilter(onCharacterSelected: onCharacterSelected),
                 ],
               ),
             ),
           ],
         ),
-
-      floatingActionButton: 
-        Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton(
-              onPressed: _toCurrentLocation,
-              child: const Icon(Icons.my_location_outlined),
-            ),
-          ],
-        ),
-
-      floatingActionButtonLocation: FloatingActionButtonLocation.miniStartFloat,
     );
   }
 

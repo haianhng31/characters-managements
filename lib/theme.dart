@@ -40,6 +40,11 @@ ThemeData primaryTheme = ThemeData(
     centerTitle: true,
   ),
 
+  navigationBarTheme: NavigationBarThemeData(
+    backgroundColor: AppColors.secondaryColor,
+    surfaceTintColor: Colors.transparent,
+  ),
+
   // text 
   // can do: TextTheme().copyWith()
   textTheme: TextTheme(

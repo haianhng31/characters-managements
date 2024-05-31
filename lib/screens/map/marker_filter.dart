@@ -36,29 +36,55 @@ class _MarkerFilterState extends State<MarkerFilter> {
     });
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
-    return (dataInitialized==false) ? const Center(child: CircularProgressIndicator()) : 
-    DropdownButton<String>(
-      value: _selectedCharacterId,
-      onChanged: (String? newValue) {
-        setState(() {
-          _selectedCharacterId = newValue;
-        });
-        widget.onCharacterSelected(newValue!);
-      },
-      items: [
-        const DropdownMenuItem(
-          value: "",
-          child: Text('Show all'),
-        ),
-        ..._allCharacters.entries.map((character) {
-          return DropdownMenuItem(
-            value: character.key,
-            child: Text(character.value.name),
+    return (dataInitialized == false)
+        ? const Center(child: CircularProgressIndicator())
+        : PopupMenuButton<String>(
+            onSelected: (String? newValue) {
+              setState(() {
+                _selectedCharacterId = newValue;
+              });
+              widget.onCharacterSelected(newValue!);
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem(
+                  value: "",
+                  child: Text('Show all'),
+                  // backgroundColor: Colors.white,
+                ),
+                ..._allCharacters.entries.map((character) {
+                  return PopupMenuItem(
+                    value: character.key,
+                    child: Text(
+                      character.value.name,
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  );
+                }),
+              ];
+            },
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.white,
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.filter_list, color: Colors.black),
+                  const SizedBox(width: 5),
+                  Text(
+                    _selectedCharacterId == null
+                        ? 'Filter Characters'
+                        : _allCharacters[_selectedCharacterId]?.name ?? '',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
           );
-        }),
-      ],
-    );
   }
 }

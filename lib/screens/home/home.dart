@@ -6,6 +6,7 @@ import 'package:flutter_rpg/screens/map/map.dart';
 import 'package:flutter_rpg/services/character_store.dart';
 import 'package:flutter_rpg/shared/styled_button.dart';
 import 'package:flutter_rpg/shared/styled_text.dart';
+import 'package:flutter_rpg/theme.dart';
 import 'package:provider/provider.dart';
 
 class Home extends StatefulWidget {
@@ -16,6 +17,29 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    if (_selectedIndex == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => CreateScreen(),
+        ),
+      );
+    }
+    else if (_selectedIndex == 2) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MapPage(),
+        ),
+      );
+    }
+  }
 
   @override
   void initState() { // this runs before the build function 
@@ -54,25 +78,46 @@ class _HomeState extends State<Home> {
               ),
           ),
           
-          StyledButton(
-            onPressed: (){
-              Navigator.push(context, MaterialPageRoute(
-                builder: (ctx) => const CreateScreen()
-              ));
-            }, 
-            child: const StyledHeading("Create new")
-          ),
+          // StyledButton(
+          //   onPressed: (){
+          //     Navigator.push(context, MaterialPageRoute(
+          //       builder: (ctx) => const CreateScreen()
+          //     ));
+          //   }, 
+          //   child: const StyledHeading("Create new")
+          // ),
 
-          StyledButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(
-                builder: (ctx) => const MapPage()
-              ));
-            }, 
-            child: const StyledHeading("See Locations")
-          )
+          // StyledButton(
+          //   onPressed: () {
+          //     Navigator.push(context, MaterialPageRoute(
+          //       builder: (ctx) => const MapPage()
+          //     ));
+          //   }, 
+          //   child: const StyledHeading("See Locations")
+          // )
         ],
         )
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: AppColors.secondaryColor,
+        items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.draw),
+              label: 'Create new',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.map),
+              label: 'Location',
+            ),
+          ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.white, 
+        onTap: _onItemTapped,
       )
     );
   }
