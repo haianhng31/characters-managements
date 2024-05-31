@@ -1,7 +1,7 @@
 # Characters Management App
 This is a Flutter application for managing characters in a game or story. It allows users to create, view, and edit characters with various attributes and associated markers on a map.
 
-##Features
+## Features
 * **Character Creation**: Create new characters with details such as name, vocation, and description.
 * **Character Editing**: Edit existing character details and attributes.
 * **Map Integration**: Plot character markers on a map and view their associated information.
