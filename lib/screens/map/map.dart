@@ -306,21 +306,52 @@ class _MapPageState extends State<MapPage> {
             ),
 
             Positioned(
-              bottom: 15.0, 
-              left: 20.0, 
-              child: Row(
+              bottom: 50.0, 
+              left: 10.0, 
+              child: Column(
                 children: [
-                  IconButton(
-                    onPressed: _toCurrentLocation,
-                    icon: const Icon(Icons.my_location_outlined),
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4.0,
+                          spreadRadius: 1.0,
+                          offset: Offset(0.0, 2.0),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      color: Colors.black,
+                      onPressed: _toCurrentLocation,
+                      icon: const Icon(Icons.my_location_outlined),
+                    ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        isShowingPolyline = !isShowingPolyline;
-                      });
-                    },
-                    icon: const Icon(Icons.route),
+                  SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isShowingPolyline ? Colors.blue : Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4.0,
+                          spreadRadius: 1.0,
+                          offset: Offset(0.0, 2.0),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      color: isShowingPolyline ? Colors.white : Colors.black,
+                      onPressed: () {
+                        setState(() {
+                          isShowingPolyline = !isShowingPolyline;
+                        });
+                      },
+                      icon: const Icon(Icons.route),
+                    ),
                   ),
             ],)),
 
