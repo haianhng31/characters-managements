@@ -10,14 +10,9 @@ This is a Flutter application for managing characters in a game or story. It all
 * **Search Location**: Allows users to search for a specific location. When a location is entered into the search bar, the map navigates to that location.
 * **Current Location Tracker**: The map updates in real-time to follow the device's movements. Additionally, users can quickly return to their current location on the map with a designated button if they have navigated to another area.
 
-
-
-
 ## Inspiration 
 #### The Book Eaters by Sunyi Dean
-In this book, there are people whose food are books and they have several families that have their own specialities, all of which live in the same society as we are right now. 
-They have to navigate the real world while have their own struggle and even fight within each families. 
-When reading this book, I thought about the logic thinking of the writer when writing this, and I thought it would be cool to have an application to keep track of each members in each houses, and most importantly track their locations in the map of the real world, so that the writing and the timeline can be as real and logical as possible. Hence the creation of this app.
+In this novel, characters sustain themselves with books and belong to distinct families/houses, each with its own unique traits. Coexisting with us, the normap people in society, they face internal conflicts and navigate their own challenges which are usually tied to their house arrangement. As I delved into the narrative, I couldn't help but wonder about the author's logical thinking behind the story. This sparked the idea of creating an application to manage each family's members and track their real-world locations. My goal was to enhance the realism and coherence of storytelling and timelines within the narrative. 
 
 ## App Preview 
 ### Home page & Character Profile Page
