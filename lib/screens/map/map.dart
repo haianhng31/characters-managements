@@ -148,7 +148,9 @@ class _MapPageState extends State<MapPage> {
     List<Vocation> vocations = Vocation.values.toList();
     Map<String, BitmapDescriptor> icons = {};
     for (Vocation vocation in vocations) {
-      BitmapDescriptor icon = await _loadMarkerIcon('assets/img/vocations/${vocation.image}');
+      var imgPath = vocation.image.replaceFirst(RegExp(r'\.jpg$'), '_marker.png');
+      print("imgPath: assets/img/vocations/markers/$imgPath");
+      BitmapDescriptor icon = await _loadMarkerIcon('assets/img/vocations/$imgPath');
       icons[vocation.toString()] = icon;
     }
     setState(() {
@@ -158,13 +160,18 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<BitmapDescriptor> _loadMarkerIcon(imgPath) async {
-    final bytes = await rootBundle.load(imgPath);
-    img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
-    img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
-    img.Image circularImage = img.copyCropCircle(resizedImage);
-    Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(circularImage));
-    final markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
-    return markerIcon;
+    try {
+      final bytes = await rootBundle.load(imgPath);
+      img.Image baseSizeImage = img.decodeImage(bytes.buffer.asUint8List())!;
+      img.Image resizedImage = img.copyResize(baseSizeImage, width: 80, height: 80);
+      img.Image circularImage = img.copyCropCircle(resizedImage);
+      Uint8List finalImageBytes = Uint8List.fromList(img.encodePng(circularImage));
+      final markerIcon = BitmapDescriptor.fromBytes(finalImageBytes);
+      return markerIcon;
+    } catch (e) {
+      print('Error loading image: $e');
+      throw e;
+    }
   }
 
   void onCharacterSelected(String characterId) {
